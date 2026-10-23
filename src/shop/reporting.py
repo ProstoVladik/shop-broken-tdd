@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-
 from shop.inventory import low_stock_items
 from shop.money import format_kopecks
 
