@@ -63,7 +63,6 @@ def test_zero_quantity_is_rejected() -> None:
     assert validate_order([line(qty="1")]) is None
 
 
-
 def test_non_numeric_price_is_rejected() -> None:
     """Spec 3, rule 6: `unit_price_kopecks` must be a whole number."""
     assert validate_order([line(unit_price_kopecks="two")]) is not None
@@ -74,7 +73,6 @@ def test_negative_price_is_rejected() -> None:
     """Spec 3, rule 7: a price may not be negative."""
     assert validate_order([line(unit_price_kopecks="-1")]) is not None
     assert validate_order([line(unit_price_kopecks="1")]) is None
-
 
 
 def test_duplicate_sku_is_rejected() -> None:
@@ -113,27 +111,46 @@ def test_tier_discount_at_highest_threshold() -> None:
     """Spec 4, steps 2-5: 50 units give 15%, not 5% + 10%."""
     assert calculate_order_total([line(qty="50", unit_price_kopecks="1000")]) == 51000
 
+
 def test_promo_code_beats_tier_discount() -> None:
     """Spec 4, steps 3-4: the bigger percentage wins, the two do not add up."""
-    assert calculate_order_total([line(qty="10", unit_price_kopecks="1000")], promo_code="WELCOME10") == 10800
+    assert (
+        calculate_order_total([line(qty="10", unit_price_kopecks="1000")], promo_code="WELCOME10")
+        == 10800
+    )
 
 
 def test_discount_is_capped_at_thirty_percent() -> None:
     """Spec 4, step 5: VIP35 gives 35%, but the cap is 30%. Compare with example 4."""
-    assert calculate_order_total([line(qty="100", unit_price_kopecks="10000")], promo_code="VIP35") == 840000
+    assert (
+        calculate_order_total([line(qty="100", unit_price_kopecks="10000")], promo_code="VIP35")
+        == 840000
+    )
 
 
 def test_delivery_is_charged_for_small_order() -> None:
     """Spec 4, steps 7-10: a city adds SHIPPING_KOPEKS and VAT is charged on it."""
     assert calculate_order_total([line()], shipping_city="msk") == 70800
 
+
 def test_free_delivery_uses_discounted_subtotal() -> None:
     """Spec 4, step 7: the threshold is checked against the sum after the discount."""
     assert calculate_order_total([line(unit_price_kopecks="499999")], shipping_city="msk") == 658799
-    assert calculate_order_total([line(qty="100", unit_price_kopecks="10000")], shipping_city="msk") == 1020000
+    assert (
+        calculate_order_total([line(qty="100", unit_price_kopecks="10000")], shipping_city="msk")
+        == 1020000
+    )
 
 
 def test_vat_is_charged_on_the_discounted_sum() -> None:
     """Spec 4, steps 8-10: base = discounted subtotal + delivery."""
-    assert calculate_order_total([line(qty="9", unit_price_kopecks="1000")],promo_code="WELCOME10", shipping_city="msk") == 68520
-    assert calculate_order_total([line(qty="9", unit_price_kopecks="1000")], shipping_city="msk") == 69600
+    assert (
+        calculate_order_total(
+            [line(qty="9", unit_price_kopecks="1000")], promo_code="WELCOME10", shipping_city="msk"
+        )
+        == 68520
+    )
+    assert (
+        calculate_order_total([line(qty="9", unit_price_kopecks="1000")], shipping_city="msk")
+        == 69600
+    )
